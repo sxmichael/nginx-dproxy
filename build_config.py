@@ -12,18 +12,19 @@ data = json.load(response)
 
 upstreams = {}
 for n in data['node']['nodes']:
-    for node in n['nodes']:
-        name, index = node['key'].split('/')[-2:]
-        name_i = '%s-%s' % (name, index)
-        url = node['value']
-
-        if name not in upstreams:
-            upstreams[name] = []
-        upstreams[name].append(url)
-
-        if name_i not in upstreams:
-            upstreams[name_i] = []
-        upstreams[name_i].append(url)
+    if 'nodes' in n:
+        for node in n['nodes']:
+            name, index = node['key'].split('/')[-2:]
+            name_i = '%s-%s' % (name, index)
+            url = node['value']
+    
+            if name not in upstreams:
+                upstreams[name] = []
+            upstreams[name].append(url)
+    
+            if name_i not in upstreams:
+                upstreams[name_i] = []
+            upstreams[name_i].append(url)
 
 conf_upstreams = ["upstream %s { %s }" % (name, " ".join(["server %s;" % url for url in urls])) for name, urls in upstreams.items()]
 conf_servers = ["server { listen %s; server_name %s.%s; location / { proxy_pass http://%s; }}" % (tld_port, name, tld_host, name) for name, _ in upstreams.items()]
